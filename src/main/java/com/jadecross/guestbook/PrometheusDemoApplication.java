@@ -1,45 +1,39 @@
 package com.jadecross.guestbook;
 
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import javax.servlet.http.HttpServletRequest;
-import org.apache.commons.io.FilenameUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Counter;
+
+import javax.annotation.PostConstruct;
 
 @SpringBootApplication
 @RestController
 public class PrometheusDemoApplication {
 
-	@Autowired
-	private MeterRegistry meterRegistry;
+    private final MeterRegistry meterRegistry;
+    private Counter counter;
 
-	private Counter counter;
+    public PrometheusDemoApplication(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+    }
 
-	@PostConstruct
-	public void init() {
-		counter = meterRegistry.counter("api.call.count");
-	}
+    @PostConstruct
+    public void init() {
+        this.counter = this.meterRegistry.counter("requests_total");
+    }
 
-	public static void main(String[] args) {
-		SpringApplication.run(PrometheusDemoApplication.class, args);
-	}
+    @RequestMapping(value = "/hello", method = RequestMethod.GET)
+    public String hello(@RequestParam(value = "name", defaultValue = "World") String name) {
+        counter.increment();
+        return "Hello " + name;
+    }
 
-	@GetMapping("/test")
-	public String test() {
-		counter.increment();
-		return "test";
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(PrometheusDemoApplication.class, args);
+    }
 }
