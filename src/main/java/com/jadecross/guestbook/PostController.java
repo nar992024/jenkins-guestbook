@@ -19,6 +19,31 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.multipart.MultipartFile;
 
+@SpringBootApplication
+@RestController
+public class PrometheusDemoApplication {
+
+	@Autowired
+	private MeterRegistry meterRegistry;
+
+	private Counter counter;
+
+	@PostConstruct
+	public void init() {
+		counter = meterRegistry.counter("api.call.count");
+	}
+
+	public static void main(String[] args) {
+		SpringApplication.run(PrometheusDemoApplication.class, args);
+	}
+
+	@GetMapping("/test")
+	public String test() {
+		counter.increment();
+		return "test";
+	}
+}
+
 @Controller
 public class PostController {
 	
